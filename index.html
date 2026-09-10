@@ -4,76 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prince Shopping Mall</title>
-    <!-- Firebase SDK (Compat Version for Easy Setup) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6; }
-        header { background-color: #1f2937; color: white; text-align: center; padding: 20px 10px; }
-        header h1 { margin: 0; font-size: 28px; color: #facc15; }
-        header p { margin: 5px 0 0 0; font-size: 14px; }
-        .address { font-size: 13px; color: #9ca3af; margin-top: 10px; }
+        /* Modern Fonts & Animations */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
         
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
         
-        /* Product Card Styles */
-        .product-card { background: white; width: 280px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; text-align: center; padding-bottom: 15px; position: relative; }
-        .product-card img { width: 100%; height: 250px; object-fit: cover; }
-        .product-title { font-size: 18px; margin: 15px 0 5px; font-weight: bold; color: #374151; }
-        .product-price { font-size: 20px; color: #16a34a; font-weight: bold; margin-bottom: 15px; }
+        /* Header & Navbar */
+        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
+        .top-bar h1 { margin: 0; font-size: 28px; letter-spacing: 1px; color: #facc15; }
+        .auth-buttons button { background: white; color: #1e3c72; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-left: 10px; }
+        .auth-buttons button:hover { background: #facc15; transform: scale(1.05); }
         
-        .buy-btn { background-color: #25D366; color: white; border: none; padding: 10px 15px; font-size: 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 80%; }
-        .buy-btn:hover { background-color: #128C7E; }
-        .delete-btn { background-color: #ef4444; color: white; border: none; padding: 5px 10px; margin-top: 10px; border-radius: 4px; cursor: pointer; display: none; }
+        /* Category Navigation */
+        .categories { display: flex; justify-content: center; gap: 15px; padding: 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
+        .cat-btn { background: #e5e7eb; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; }
+        .cat-btn:hover, .cat-btn.active { background: #1e3c72; color: white; transform: translateY(-2px); }
+
+        /* Product Grid & Cards with Animation */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; }
+        .product-card { background: white; width: 280px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.08); overflow: hidden; text-align: center; transition: all 0.4s ease; opacity: 0; animation: fadeIn 0.8s forwards; position: relative; }
+        .product-card:hover { transform: translateY(-10px); box-shadow: 0 15px 25px rgba(0,0,0,0.15); }
+        .product-card img { width: 100%; height: 260px; object-fit: cover; transition: 0.5s; }
+        .product-card:hover img { transform: scale(1.05); }
+        .card-body { padding: 20px; }
+        .product-title { font-size: 18px; margin: 0 0 10px; color: #1f2937; }
+        .product-price { font-size: 22px; color: #10b981; font-weight: 700; margin-bottom: 15px; }
         
-        footer { background-color: #1f2937; color: white; text-align: center; padding: 15px; margin-top: 40px; font-size: 14px; }
+        .buy-btn { background: linear-gradient(45deg, #25D366, #128C7E); color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 30px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3); }
+        .buy-btn:hover { box-shadow: 0 6px 15px rgba(37, 211, 102, 0.5); }
         
-        /* Admin Section Styles */
-        #admin-section { display: none; background: white; max-width: 500px; margin: 20px auto; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #admin-section h2 { margin-top: 0; color: #1f2937; }
-        .form-group { margin-bottom: 15px; }
-        .form-group input { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        .add-btn { background-color: #3b82f6; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 100%; }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Modals (Login/Signup & Admin) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 100; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; position: relative; animation: slideDown 0.4s ease; text-align: center; }
+        @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 24px; cursor: pointer; color: #666; }
+        .form-group input, .form-group select { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-family: 'Poppins'; }
+        .action-btn { background: #1e3c72; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+
+        footer { background: #1f2937; color: white; text-align: center; padding: 30px 10px; margin-top: 50px; }
+        .admin-link { color: #9ca3af; font-size: 12px; cursor: pointer; text-decoration: underline; margin-top: 20px; display: inline-block; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Prince Shopping Mall</h1>
-        <p>Gents, Ladies, Kids & Wedding Shoot Clothes</p>
-        <p class="address">📍 Bhaggarwa Bazar, Huzoorpur Road 271872</p>
+        <div class="top-bar">
+            <div>
+                <h1>Prince Shopping Mall</h1>
+                <p style="margin: 5px 0 0; font-size: 13px;">📍 Bhaggarwa Bazar, Huzoorpur Road 271872</p>
+            </div>
+            <div class="auth-buttons" id="auth-section">
+                <button onclick="openModal('loginModal')">Log In</button>
+                <button onclick="openModal('signupModal')">Sign Up</button>
+            </div>
+        </div>
     </header>
 
-    <!-- Admin Panel (Hidden by default) -->
-    <div id="admin-section">
-        <h2>🛠️ Admin Panel - Add Product</h2>
-        <div class="form-group">
-            <input type="text" id="p-name" placeholder="Product Name (e.g., Gents Suit)">
-        </div>
-        <div class="form-group">
-            <input type="number" id="p-price" placeholder="Price (e.g., 500)">
-        </div>
-        <div class="form-group">
-            <input type="text" id="p-image" placeholder="Image URL (Link of photo)">
-        </div>
-        <button class="add-btn" onclick="addProduct()">➕ Add to Website</button>
-        <p style="font-size: 12px; color: gray; margin-top: 10px;">Note: You can delete products directly from the home page while logged in as admin.</p>
+    <!-- Category Filter -->
+    <div class="categories">
+        <button class="cat-btn active" onclick="filterProducts('All')">All Collection</button>
+        <button class="cat-btn" onclick="filterProducts('Gents')">Gents</button>
+        <button class="cat-btn" onclick="filterProducts('Ladies')">Ladies</button>
+        <button class="cat-btn" onclick="filterProducts('Kids')">Kids & Girls</button>
+        <button class="cat-btn" onclick="filterProducts('Wedding')">Wedding Shoot</button>
     </div>
 
-    <!-- Products Container -->
+    <!-- Products Grid -->
     <div class="container" id="product-list">
-        <p>Loading products from database...</p>
+        <h3 style="color: gray; width: 100%; text-align: center;">Loading amazing products...</h3>
     </div>
 
     <footer>
         <p>&copy; 2026 Prince Shopping Mall. All Rights Reserved.</p>
-        <p>Need Help? WhatsApp us at 9621068266</p>
-        <button onclick="adminLogin()" style="background: none; border: none; color: #6b7280; cursor: pointer; margin-top: 10px; font-size: 12px;">Admin Login</button>
+        <p>WhatsApp Us: 9621068266</p>
+        <span class="admin-link" onclick="openModal('adminLoginModal')">Admin Login (Store Owner)</span>
     </footer>
 
+    <!-- Customer Sign Up Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('signupModal')">&times;</span>
+            <h2>Create Account</h2>
+            <div class="form-group"><input type="email" id="su-email" placeholder="Email Address"></div>
+            <div class="form-group"><input type="password" id="su-pass" placeholder="Create Password (min 6 char)"></div>
+            <button class="action-btn" onclick="signUp()">Sign Up</button>
+        </div>
+    </div>
+
+    <!-- Customer Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Welcome Back</h2>
+            <div class="form-group"><input type="email" id="li-email" placeholder="Email Address"></div>
+            <div class="form-group"><input type="password" id="li-pass" placeholder="Password"></div>
+            <button class="action-btn" onclick="login()">Log In</button>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('adminLoginModal')">&times;</span>
+            <h2>Admin Login</h2>
+            <div class="form-group"><input type="password" id="admin-pass" placeholder="Enter PIN"></div>
+            <button class="action-btn" onclick="adminLogin()">Access Panel</button>
+        </div>
+    </div>
+
+    <!-- Admin Add Product Modal -->
+    <div id="adminPanelModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('adminPanelModal')">&times;</span>
+            <h2>Add New Product</h2>
+            <div class="form-group"><input type="text" id="p-name" placeholder="Product Name"></div>
+            <div class="form-group"><input type="number" id="p-price" placeholder="Price (₹)"></div>
+            <div class="form-group">
+                <select id="p-category">
+                    <option value="Gents">Gents</option>
+                    <option value="Ladies">Ladies</option>
+                    <option value="Kids">Kids & Girls</option>
+                    <option value="Wedding">Wedding Shoot</option>
+                </select>
+            </div>
+            <div class="form-group"><input type="text" id="p-image" placeholder="Image URL (Link)"></div>
+            <button class="action-btn" onclick="addProduct()" style="background: #10b981;">➕ Publish Product</button>
+        </div>
+    </div>
+
     <script>
-        // 1. Firebase Configuration (Aapke Screenshot se)
+        // 1. Firebase Config (Aapki chabi)
         const firebaseConfig = {
             apiKey: "AIzaSyC2g3DSehlNzeDKaKiWgizcwURIzNstbmE",
             authDomain: "prince-shopping-mall.firebaseapp.com",
@@ -83,98 +152,118 @@
             messagingSenderId: "524767266509",
             appId: "1:524767266509:web:642fd2a3dd85578b8acb84"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
         let isAdmin = false;
+        let allProducts = {};
 
-        // 2. Load Products from Database
-        db.ref('products').on('value', (snapshot) => {
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = ''; // Clear loading text
-            
-            const data = snapshot.val();
-            if (!data) {
-                productList.innerHTML = '<p>No products available right now. Admin please add products.</p>';
-                return;
-            }
+        // Modal Functions
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-            for (let id in data) {
-                let product = data[id];
-                let displayAdminBtn = isAdmin ? 'inline-block' : 'none';
-                
-                let card = `
-                    <div class="product-card">
-                        <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/280x250?text=No+Image'">
-                        <h3 class="product-title">${product.name}</h3>
-                        <div class="product-price">₹${product.price}</div>
-                        <button class="buy-btn" onclick="orderOnWhatsApp('${product.name}', '${product.price}')">🛒 Buy via WhatsApp</button>
-                        <br>
-                        <button class="delete-btn" style="display: ${displayAdminBtn};" onclick="deleteProduct('${id}')">🗑️ Delete Item</button>
-                    </div>
-                `;
-                productList.innerHTML += card;
+        // Customer Authentication
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('auth-section').innerHTML = `<span style="margin-right:15px;">👤 ${user.email.split('@')[0]}</span> <button onclick="auth.signOut()">Logout</button>`;
+            } else {
+                document.getElementById('auth-section').innerHTML = `<button onclick="openModal('loginModal')">Log In</button> <button onclick="openModal('signupModal')">Sign Up</button>`;
             }
         });
 
-        // 3. Add Product to Database (Admin Only)
+        function signUp() {
+            const email = document.getElementById('su-email').value;
+            const pass = document.getElementById('su-pass').value;
+            auth.createUserWithEmailAndPassword(email, pass).then(() => {
+                alert("Account created successfully!"); closeModal('signupModal');
+            }).catch(e => alert(e.message));
+        }
+
+        function login() {
+            const email = document.getElementById('li-email').value;
+            const pass = document.getElementById('li-pass').value;
+            auth.signInWithEmailAndPassword(email, pass).then(() => {
+                alert("Logged in!"); closeModal('loginModal');
+            }).catch(e => alert(e.message));
+        }
+
+        // Admin Access
+        function adminLogin() {
+            if (document.getElementById('admin-pass').value === "9621") {
+                isAdmin = true;
+                closeModal('adminLoginModal');
+                openModal('adminPanelModal');
+                document.getElementById('admin-pass').value = '';
+                displayProducts('All'); // Refresh to show delete buttons
+            } else { alert("Wrong PIN!"); }
+        }
+
+        // Load & Display Products
+        db.ref('products').on('value', (snapshot) => {
+            allProducts = snapshot.val() || {};
+            displayProducts('All');
+        });
+
+        function displayProducts(category) {
+            const container = document.getElementById('product-list');
+            container.innerHTML = '';
+            
+            if (Object.keys(allProducts).length === 0) {
+                container.innerHTML = '<h3>No products yet. Admin please login to add.</h3>';
+                return;
+            }
+
+            for (let id in allProducts) {
+                let product = allProducts[id];
+                if (category === 'All' || product.category === category) {
+                    let adminBtn = isAdmin ? `<button onclick="deleteProduct('${id}')" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px; margin-top:10px; cursor:pointer;">🗑️ Delete</button>` : '';
+                    
+                    container.innerHTML += `
+                        <div class="product-card">
+                            <img src="${product.image}" onerror="this.src='https://via.placeholder.com/280x260?text=Prince+Mall'">
+                            <div class="card-body">
+                                <p style="font-size:12px; color:gray; margin:0 0 5px;">${product.category}</p>
+                                <h3 class="product-title">${product.name}</h3>
+                                <div class="product-price">₹${product.price}</div>
+                                <button class="buy-btn" onclick="orderOnWhatsApp('${product.name}', '${product.price}')">🛒 Buy Now</button>
+                                ${adminBtn}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Update Active Category Button Styling
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            event && event.target.classList.add('active');
+        }
+
+        function filterProducts(cat) { displayProducts(cat); }
+
         function addProduct() {
             const name = document.getElementById('p-name').value;
             const price = document.getElementById('p-price').value;
-            let image = document.getElementById('p-image').value;
+            const category = document.getElementById('p-category').value;
+            let image = document.getElementById('p-image').value || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500";
 
-            if (name === "" || price === "") {
-                alert("Please enter Product Name and Price!");
-                return;
-            }
-            if(image === "") {
-                image = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=500"; // Default image
-            }
+            if (!name || !price) return alert("Name and Price are required!");
 
-            db.ref('products').push({
-                name: name,
-                price: price,
-                image: image
-            });
-
-            // Clear inputs
+            db.ref('products').push({ name, price, category, image });
+            alert("Product Added Successfully!");
+            
             document.getElementById('p-name').value = '';
             document.getElementById('p-price').value = '';
             document.getElementById('p-image').value = '';
-            alert("Product added successfully!");
         }
 
-        // 4. Delete Product (Admin Only)
         function deleteProduct(id) {
-            if(confirm("Are you sure you want to delete this product?")) {
-                db.ref('products/' + id).remove();
-            }
+            if(confirm("Delete this product?")) db.ref('products/' + id).remove();
         }
 
-        // 5. WhatsApp Order Function
-        function orderOnWhatsApp(productName, price) {
-            let phone = "919621068266";
-            let message = `Namaste Prince Shopping Mall!\nMain yeh item kharidna chahta/chahti hu:\n\n🛍️ *Item:* ${productName}\n💰 *Price:* ₹${price}\n\nKripya order confirm karein aur payment details bhejein.`;
-            let whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappURL, "_blank");
-        }
-
-        // 6. Admin Login
-        function adminLogin() {
-            let password = prompt("Enter Admin Password:");
-            // Password is the last 4 digits of your number
-            if (password === "9621") {
-                isAdmin = true;
-                document.getElementById('admin-section').style.display = 'block';
-                alert("Login Successful! You can now add or delete products.");
-                // Refresh product view to show delete buttons
-                db.ref('products').once('value').then((snapshot) => {
-                    db.ref('products').set(snapshot.val()); 
-                });
-            } else {
-                alert("Wrong Password!");
-            }
+        function orderOnWhatsApp(name, price) {
+            if(!auth.currentUser) return alert("Please Log In or Sign Up to place an order.");
+            let msg = `Namaste!\nItem: ${name}\nPrice: ₹${price}\nCustomer Email: ${auth.currentUser.email}\nKripya order process karein.`;
+            window.open(`https://wa.me/919621068266?text=${encodeURIComponent(msg)}`, "_blank");
         }
     </script>
 </body>
